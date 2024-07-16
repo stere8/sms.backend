@@ -1,9 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using sms.backend.Data;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 [ApiController]
 [Route("[controller]")]

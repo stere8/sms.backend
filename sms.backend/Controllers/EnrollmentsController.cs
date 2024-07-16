@@ -1,9 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using sms.backend.Data;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using sms.backend.Views;
 
 [ApiController]
@@ -27,34 +24,37 @@ public class EnrollmentsController : ControllerBase
         var students = await _context.Students.ToListAsync();
         var classes = await _context.Classes.ToListAsync();
 
-        List<EnrollmentsViews> retunrnedViewsList = [];
+        var returnedViewsList = new List<EnrollmentsViews>();
 
         foreach (var enroll in enrollments)
         {
-            var studentFirstName = students.First(student => student.StudentId == enroll.StudentId).FirstName;
-            var studentLastName = students.First(student => student.StudentId == enroll.StudentId).LastName;
-            var student = $"{studentFirstName} {studentLastName}";
-            var classItem = classes.First(Class => Class.ClassId == enroll.ClassId).Name;
+            var student = students.FirstOrDefault(s => s.StudentId == enroll.StudentId);
+            var classItem = classes.FirstOrDefault(c => c.ClassId == enroll.ClassId);
 
-            retunrnedViewsList.Add(new EnrollmentsViews()
-                { EnrollmentRef = enroll.EnrollmentID, EnrolledClass = classItem, EnrolledStudent = student });
+            if (student != null && classItem != null)
+            {
+                var studentName = $"{student.FirstName} {student.LastName}";
+                returnedViewsList.Add(new EnrollmentsViews()
+                {
+                    EnrollmentRef = enroll.EnrollmentID,
+                    EnrolledClass = classItem.Name,
+                    EnrolledStudent = studentName
+                });
+            }
         }
 
-
         _logger.LogInformation("Successfully retrieved enrollments.");
-        return Ok(retunrnedViewsList);
+        return Ok(returnedViewsList);
     }
 
     [HttpGet("{studentId}/{classId}")]
     public async Task<ActionResult<Enrollment>> GetEnrollment(int studentId, int classId)
     {
-        _logger.LogInformation("Getting enrollment for Student ID: {StudentId} and Class ID: {ClassId}", studentId,
-            classId);
+        _logger.LogInformation("Getting enrollment for Student ID: {StudentId} and Class ID: {ClassId}", studentId, classId);
         var enrollment = await _context.Enrollments.FindAsync(studentId, classId);
         if (enrollment == null)
         {
-            _logger.LogWarning("Enrollment for Student ID: {StudentId} and Class ID: {ClassId} not found", studentId,
-                classId);
+            _logger.LogWarning("Enrollment for Student ID: {StudentId} and Class ID: {ClassId} not found", studentId, classId);
             return NotFound();
         }
 
@@ -67,15 +67,13 @@ public class EnrollmentsController : ControllerBase
         _logger.LogInformation("Creating new enrollment");
         _context.Enrollments.Add(enrollment);
         await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetEnrollment),
-            new { studentId = enrollment.StudentId, classId = enrollment.ClassId }, enrollment);
+        return CreatedAtAction(nameof(GetEnrollment), new { studentId = enrollment.StudentId, classId = enrollment.ClassId }, enrollment);
     }
 
     [HttpDelete("{studentId}/{classId}")]
     public async Task<IActionResult> DeleteEnrollment(int studentId, int classId)
     {
-        _logger.LogInformation("Deleting enrollment for Student ID: {StudentId} and Class ID: {ClassId}", studentId,
-            classId);
+        _logger.LogInformation("Deleting enrollment for Student ID: {StudentId} and Class ID: {ClassId}", studentId, classId);
         var enrollment = await _context.Enrollments.FindAsync(studentId, classId);
         if (enrollment == null)
         {

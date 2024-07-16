@@ -18,13 +18,9 @@ namespace sms.backend.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            base.OnModelCreating(modelBuilder);
-
-            // Composite key for Enrollment
             modelBuilder.Entity<Enrollment>()
                 .HasKey(e => new { e.StudentId, e.ClassId });
-
-            // Define relationships and constraints if any
+            // Define other relationships and keys as needed
         }
     }
 }
