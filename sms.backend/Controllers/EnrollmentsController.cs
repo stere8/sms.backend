@@ -31,8 +31,8 @@ public class EnrollmentsController : ControllerBase
 
         foreach (var enroll in enrollments)
         {
-            var studentFirstName = students.First(student => student.StudentId == enroll.ClassId).FirstName;
-            var studentLastName = students.First(student => student.StudentId == enroll.ClassId).LastName;
+            var studentFirstName = students.First(student => student.StudentId == enroll.StudentId).FirstName;
+            var studentLastName = students.First(student => student.StudentId == enroll.StudentId).LastName;
             var student = $"{studentFirstName} {studentLastName}";
             var classItem = classes.First(Class => Class.ClassId == enroll.ClassId).Name;
 
