@@ -29,6 +29,21 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
 });
 
+// Add CORS policy
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigin",
+        builder => builder
+        .WithOrigins("http://localhost:3000")
+        .AllowAnyHeader()
+        .AllowAnyMethod());
+    options.AddPolicy("AllowSpecificOrigin2",
+        builder => builder
+            .AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod());
+});
+
 // Configure logging
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
@@ -56,8 +71,9 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-// Enable CORS
-app.UseCors("AllowAllOrigins");
+// Use CORS policy
+app.UseCors("AllowSpecificOrigin");
+app.UseCors("AllowSpecificOrigin2");
 
 app.UseAuthorization();
 
