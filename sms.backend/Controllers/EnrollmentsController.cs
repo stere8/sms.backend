@@ -36,7 +36,7 @@ public class EnrollmentsController : ControllerBase
                 var studentName = $"{student.FirstName} {student.LastName}";
                 returnedViewsList.Add(new EnrollmentsViews()
                 {
-                    EnrollmentRef = enroll.EnrollmentID,
+                    EnrollmentRef = enroll.EnrollmentId,
                     EnrolledClass = classItem.Name,
                     EnrolledStudent = studentName
                 });
@@ -47,11 +47,25 @@ public class EnrollmentsController : ControllerBase
         return Ok(returnedViewsList);
     }
 
+    [HttpGet("{id}")]
+    public async Task<ActionResult<Enrollment>> GetEnrollmentById(int id)
+    {
+        _logger.LogInformation("Getting enrollment with ID: {Id}", id);
+        var enrollment = await _context.Enrollments.FirstOrDefaultAsync(enrol => enrol.EnrollmentId == id);
+        if (enrollment == null)
+        {
+            _logger.LogWarning("Enrollment with ID: {Id} not found", id);
+            return NotFound();
+        }
+
+        return enrollment;
+    }
+
     [HttpGet("{studentId}/{classId}")]
     public async Task<ActionResult<Enrollment>> GetEnrollment(int studentId, int classId)
     {
         _logger.LogInformation("Getting enrollment for Student ID: {StudentId} and Class ID: {ClassId}", studentId, classId);
-        var enrollment = await _context.Enrollments.FindAsync(studentId, classId);
+        var enrollment = await _context.Enrollments.FirstOrDefaultAsync(e => e.StudentId == studentId && e.ClassId == classId);
         if (enrollment == null)
         {
             _logger.LogWarning("Enrollment for Student ID: {StudentId} and Class ID: {ClassId} not found", studentId, classId);
@@ -62,19 +76,65 @@ public class EnrollmentsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Enrollment>> PostEnrollment(Enrollment enrollment)
+    public async Task<ActionResult<Enrollment>> PostEnrollment(EnrollmentInsert enrollmentInsert)
+    
     {
         _logger.LogInformation("Creating new enrollment");
+
+        Enrollment enrollment = new Enrollment()
+        {
+            ClassId = enrollmentInsert.ClassId,
+            StudentId = enrollmentInsert.StudentId
+        };
         _context.Enrollments.Add(enrollment);
         await _context.SaveChangesAsync();
         return CreatedAtAction(nameof(GetEnrollment), new { studentId = enrollment.StudentId, classId = enrollment.ClassId }, enrollment);
     }
 
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateEnrollment(int id, Enrollment updatedEnrollment)
+    {
+        if (id != updatedEnrollment.EnrollmentId)
+        {
+            return BadRequest("EnrollmentID mismatch.");
+        }
+
+        var existingEnrollment = await _context.Enrollments.FindAsync(id);
+        if (existingEnrollment == null)
+        {
+            return NotFound();
+        }
+
+        // Update fields except EnrollmentID
+        existingEnrollment.StudentId = updatedEnrollment.StudentId;
+        existingEnrollment.ClassId = updatedEnrollment.ClassId;
+        // Update other fields as necessary
+
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!_context.Enrollments.Any(e => e.EnrollmentId == id))
+            {
+                return NotFound();
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        return NoContent();
+    }
+
+
     [HttpDelete("{studentId}/{classId}")]
     public async Task<IActionResult> DeleteEnrollment(int studentId, int classId)
     {
         _logger.LogInformation("Deleting enrollment for Student ID: {StudentId} and Class ID: {ClassId}", studentId, classId);
-        var enrollment = await _context.Enrollments.FindAsync(studentId, classId);
+        var enrollment = await _context.Enrollments.FirstOrDefaultAsync(e => e.StudentId == studentId && e.ClassId == classId);
         if (enrollment == null)
         {
             return NotFound();

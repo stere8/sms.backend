@@ -15,6 +15,7 @@ namespace sms.backend.Data
         public DbSet<Mark> Marks { get; set; }
         public DbSet<Timetable> Timetables { get; set; }
         public DbSet<Attendance> Attendances { get; set; }
+        public DbSet<TeacherEnrollment> TeacherEnrollments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
