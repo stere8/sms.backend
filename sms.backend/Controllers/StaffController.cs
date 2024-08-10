@@ -27,7 +27,7 @@ public class StaffController(SchoolContext context, ILogger<StaffController> log
     }
 
     [HttpPost]
-    public async Task<ActionResult<Staff>> PostStaff(Staff staff)
+    public async Task<ActionResult<Staff>> PostStaff(Staff? staff)
     {
         logger.LogInformation("Creating new staff member");
         context.Staff.Add(staff);
