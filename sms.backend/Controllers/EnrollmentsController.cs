@@ -76,20 +76,19 @@ public class EnrollmentsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Enrollment>> PostEnrollment(EnrollmentInsert enrollmentInsert)
-    
+    public async Task<ActionResult<Enrollment>> PostEnrollment(Enrollment enrollment)
     {
-        _logger.LogInformation("Creating new enrollment");
-
-        Enrollment enrollment = new Enrollment()
+        _context.Enrollments.Add(new Enrollment
         {
-            ClassId = enrollmentInsert.ClassId,
-            StudentId = enrollmentInsert.StudentId
-        };
-        _context.Enrollments.Add(enrollment);
+            StudentId = enrollment.StudentId,
+            ClassId = enrollment.ClassId,
+            // Do not include EnrollmentID
+        });
+
         await _context.SaveChangesAsync();
         return CreatedAtAction(nameof(GetEnrollment), new { studentId = enrollment.StudentId, classId = enrollment.ClassId }, enrollment);
     }
+
 
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateEnrollment(int id, Enrollment updatedEnrollment)
@@ -99,16 +98,18 @@ public class EnrollmentsController : ControllerBase
             return BadRequest("EnrollmentID mismatch.");
         }
 
-        var existingEnrollment = await _context.Enrollments.FindAsync(id);
+        var existingEnrollment = await _context.Enrollments.AsNoTracking().FirstOrDefaultAsync(e => e.EnrollmentId == id);
         if (existingEnrollment == null)
         {
             return NotFound();
         }
 
-        // Update fields except EnrollmentID
+        // Update only non-identity fields
         existingEnrollment.StudentId = updatedEnrollment.StudentId;
         existingEnrollment.ClassId = updatedEnrollment.ClassId;
-        // Update other fields as necessary
+        // Add other fields as necessary
+
+        _context.Entry(existingEnrollment).State = EntityState.Modified;
 
         try
         {

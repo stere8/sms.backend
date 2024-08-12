@@ -21,10 +21,12 @@ namespace sms.backend.Data
         {
             modelBuilder.Entity<Enrollment>()
                 .HasKey(e => new { e.StudentId, e.ClassId });
-            // Define other relationships and keys as needed
-            modelBuilder.Entity<TeacherEnrollments>()
+
+            modelBuilder.Entity<TeacherEnrollment>()
                 .HasKey(e => new { e.StaffId, e.ClassId });
+
             // Define other relationships and keys as needed
         }
+
     }
 }
