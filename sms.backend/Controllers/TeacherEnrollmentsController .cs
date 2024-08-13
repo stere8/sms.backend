@@ -89,11 +89,11 @@ public class TeacherEnrollmentsController : ControllerBase
         return CreatedAtAction(nameof(GetTeacherEnrollment), new { teacherId = teacherEnrollment.StaffId, classId = teacherEnrollment.ClassId }, teacherEnrollment);
     }
 
-    [HttpDelete("{teacherId}/{classId}")]
-    public async Task<IActionResult> DeleteTeacherEnrollment(int teacherId, int classId)
+    [HttpDelete("{enrollmentId}")]
+    public async Task<IActionResult> DeleteTeacherEnrollment(int enrollmentId)
     {
-        _logger.LogInformation("Deleting teacher enrollment for Teacher ID: {TeacherId} and Class ID: {ClassId}", teacherId, classId);
-        var teacherEnrollment = await _context.TeacherEnrollments.FindAsync(teacherId, classId);
+        _logger.LogInformation("Deleting teacher enrollment with Enrollment ID: {EnrollmentId}", enrollmentId);
+        var teacherEnrollment = await _context.TeacherEnrollments.FindAsync(enrollmentId);
         if (teacherEnrollment == null)
         {
             return NotFound();
