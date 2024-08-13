@@ -6,4 +6,5 @@ public class TeacherEnrollmentsViews
     public string AssignedClass { get; set; }
     public string EnrolledTeacher { get; set; }
     public string AssignedLesson { get; set; }
+
 }

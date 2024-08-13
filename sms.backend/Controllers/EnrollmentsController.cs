@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using sms.backend.Data;
+using sms.backend.Models;
 using sms.backend.Views;
 
 [ApiController]
@@ -46,7 +47,6 @@ public class EnrollmentsController : ControllerBase
         _logger.LogInformation("Successfully retrieved enrollments.");
         return Ok(returnedViewsList);
     }
-
     [HttpGet("{id}")]
     public async Task<ActionResult<Enrollment>> GetEnrollmentById(int id)
     {
@@ -58,58 +58,38 @@ public class EnrollmentsController : ControllerBase
             return NotFound();
         }
 
-        return enrollment;
-    }
-
-    [HttpGet("{studentId}/{classId}")]
-    public async Task<ActionResult<Enrollment>> GetEnrollment(int studentId, int classId)
-    {
-        _logger.LogInformation("Getting enrollment for Student ID: {StudentId} and Class ID: {ClassId}", studentId, classId);
-        var enrollment = await _context.Enrollments.FirstOrDefaultAsync(e => e.StudentId == studentId && e.ClassId == classId);
-        if (enrollment == null)
-        {
-            _logger.LogWarning("Enrollment for Student ID: {StudentId} and Class ID: {ClassId} not found", studentId, classId);
-            return NotFound();
-        }
-
-        return enrollment;
+        return Ok(enrollment);
     }
 
     [HttpPost]
     public async Task<ActionResult<Enrollment>> PostEnrollment(Enrollment enrollment)
     {
-        _context.Enrollments.Add(new Enrollment
-        {
-            StudentId = enrollment.StudentId,
-            ClassId = enrollment.ClassId,
-            // Do not include EnrollmentID
-        });
-
+        _context.Enrollments.Add(enrollment);
         await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetEnrollment), new { studentId = enrollment.StudentId, classId = enrollment.ClassId }, enrollment);
-    }
 
+        _logger.LogInformation("Enrollment created with ID: {Id}", enrollment.EnrollmentId);
+        return CreatedAtAction(nameof(GetEnrollmentById), new { id = enrollment.EnrollmentId }, enrollment);
+    }
 
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateEnrollment(int id, Enrollment updatedEnrollment)
     {
         if (id != updatedEnrollment.EnrollmentId)
         {
-            return BadRequest("EnrollmentID mismatch.");
+            return BadRequest();
         }
 
-        var existingEnrollment = await _context.Enrollments.AsNoTracking().FirstOrDefaultAsync(e => e.EnrollmentId == id);
-        if (existingEnrollment == null)
+        // Fetch the existing enrollment
+        var enrollment = await _context.Enrollments.FindAsync(id);
+        if (enrollment == null)
         {
             return NotFound();
         }
 
         // Update only non-identity fields
-        existingEnrollment.StudentId = updatedEnrollment.StudentId;
-        existingEnrollment.ClassId = updatedEnrollment.ClassId;
-        // Add other fields as necessary
-
-        _context.Entry(existingEnrollment).State = EntityState.Modified;
+        enrollment.ClassId = updatedEnrollment.ClassId;
+        enrollment.StudentId = updatedEnrollment.StudentId;
+        // Add any other fields that need updating
 
         try
         {
@@ -117,7 +97,7 @@ public class EnrollmentsController : ControllerBase
         }
         catch (DbUpdateConcurrencyException)
         {
-            if (!_context.Enrollments.Any(e => e.EnrollmentId == id))
+            if (!EnrollmentExists(id))
             {
                 return NotFound();
             }
@@ -130,19 +110,26 @@ public class EnrollmentsController : ControllerBase
         return NoContent();
     }
 
-
-    [HttpDelete("{studentId}/{classId}")]
-    public async Task<IActionResult> DeleteEnrollment(int studentId, int classId)
+    private bool EnrollmentExists(int id)
     {
-        _logger.LogInformation("Deleting enrollment for Student ID: {StudentId} and Class ID: {ClassId}", studentId, classId);
-        var enrollment = await _context.Enrollments.FirstOrDefaultAsync(e => e.StudentId == studentId && e.ClassId == classId);
+        return _context.Enrollments.Any(e => e.EnrollmentId == id);
+    }
+
+
+    [HttpDelete("{enrollmentId}")]
+    public async Task<IActionResult> DeleteEnrollment(int enrollmentId)
+    {
+        _logger.LogInformation("Deleting enrollment with ID: {EnrollmentId}", enrollmentId);
+        var enrollment = await _context.Enrollments.FirstOrDefaultAsync(enr => enr.EnrollmentId == enrollmentId);
         if (enrollment == null)
         {
+            _logger.LogWarning("Enrollment with ID: {EnrollmentId} not found", enrollmentId);
             return NotFound();
         }
 
         _context.Enrollments.Remove(enrollment);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("Enrollment with ID: {EnrollmentId} deleted successfully", enrollmentId);
         return NoContent();
     }
 }

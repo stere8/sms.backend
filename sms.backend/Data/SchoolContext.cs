@@ -20,13 +20,15 @@ namespace sms.backend.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Enrollment>()
-                .HasKey(e => new { e.StudentId, e.ClassId });
+                .HasKey(e => e.EnrollmentId); // Set EnrollmentId as the primary key
 
             modelBuilder.Entity<TeacherEnrollment>()
-                .HasKey(e => new { e.StaffId, e.ClassId });
+                .Property(e => e.TeacherEnrollmentId)
+                .ValueGeneratedOnAdd();
 
             // Define other relationships and keys as needed
         }
+
 
     }
 }
