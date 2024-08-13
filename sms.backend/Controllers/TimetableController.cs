@@ -12,12 +12,12 @@ namespace sms.backend.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class TimetablesController : ControllerBase
+    public class TimetableController : ControllerBase
     {
         private readonly SchoolContext _context;
-        private readonly ILogger<TimetablesController> _logger;
+        private readonly ILogger<TimetableController> _logger;
 
-        public TimetablesController(SchoolContext context, ILogger<TimetablesController> logger)
+        public TimetableController(SchoolContext context, ILogger<TimetableController> logger)
         {
             _context = context;
             _logger = logger;
@@ -41,6 +41,20 @@ namespace sms.backend.Controllers
                 return NotFound();
             }
             return timetable;
+        }
+
+
+        [HttpGet("class/{id}")]
+        public async Task<ActionResult<Timetable>> GetClassTimetable(int id)
+        {
+            _logger.LogInformation("Getting Class timetable with ID: {Id}", id);
+            var timetable = await _context.Timetables.Where(tt => tt.ClassId == id).ToListAsync();
+            if (timetable == null)
+            {
+                _logger.LogWarning("Timetable with ID: {Id} not found", id);
+                return NotFound();
+            }
+            return Ok(timetable);
         }
 
         [HttpPost]

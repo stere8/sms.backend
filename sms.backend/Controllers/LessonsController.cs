@@ -70,4 +70,12 @@ public class LessonsController : ControllerBase
         await _context.SaveChangesAsync();
         return NoContent();
     }
+
+    [HttpGet("grade/{gradeLevel}")]
+    public async Task<ActionResult<IEnumerable<Lesson>>> GetLessonsByGradeLevel(int gradeLevel)
+    {
+        _logger.LogInformation("Getting lessons for grade level: {GradeLevel}", gradeLevel);
+        var lessons = await _context.Lessons.Where(l => l.GradeLevel == gradeLevel).ToListAsync();
+        return Ok(lessons);
+    }
 }

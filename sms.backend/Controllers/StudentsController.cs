@@ -1,70 +1,123 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using sms.backend.Data;
+using sms.backend.Models;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
-[ApiController]
-[Route("[controller]")]
-public class StudentsController : ControllerBase
+namespace sms.backend.Controllers
 {
-    private readonly SchoolContext _context;
-    private readonly ILogger<StudentsController> _logger;
-
-    public StudentsController(SchoolContext context, ILogger<StudentsController> logger)
+    [ApiController]
+    [Route("[controller]")]
+    public class StudentsController : ControllerBase
     {
-        _context = context;
-        _logger = logger;
-    }
+        private readonly SchoolContext _context;
+        private readonly ILogger<StudentsController> _logger;
 
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<Student>>> GetStudents()
-    {
-        _logger.LogInformation("Getting all students");
-        return await _context.Students.ToListAsync();
-    }
-
-    [HttpGet("{id}")]
-    public async Task<ActionResult<Student>> GetStudent(int id)
-    {
-        _logger.LogInformation("Getting student with ID: {Id}", id);
-        var student = await _context.Students.FindAsync(id);
-        if (student == null)
+        public StudentsController(SchoolContext context, ILogger<StudentsController> logger)
         {
-            _logger.LogWarning("Student with ID: {Id} not found", id);
-            return NotFound();
+            _context = context;
+            _logger = logger;
         }
-        return student;
-    }
 
-    [HttpPost]
-    public async Task<ActionResult<Student>> PostStudent(Student student)
-    {
-        _logger.LogInformation("Creating new student");
-        _context.Students.Add(student);
-        await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetStudent), new { id = student.StudentId }, student);
-    }
-
-    [HttpPut("{id}")]
-    public async Task<IActionResult> PutStudent(int id, Student student)
-    {
-        _logger.LogInformation("Updating student with ID: {Id}", id);
-        if (id != student.StudentId)
+        // GET: api/Students
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Student>>> GetStudents()
         {
-            return BadRequest();
+            _logger.LogInformation("Getting all students");
+            return await _context.Students.ToListAsync();
         }
-        _context.Entry(student).State = EntityState.Modified;
-        await _context.SaveChangesAsync();
-        return NoContent();
-    }
 
-    [
-                                  /////////////////                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         /                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   n/n/8*
-                                  /// bv+                    n
-                                  ///
-                                  ///
-                                  ///
-                                  ///
-                                  ///
-                                  ///
-                                  /// 
-        ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++/
+        // GET: api/Students/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Student>> GetStudent(int id)
+        {
+            _logger.LogInformation("Getting student with ID: {Id}", id);
+            var student = await _context.Students.FindAsync(id);
+
+            if (student == null)
+            {
+                _logger.LogWarning("Student with ID: {Id} not found", id);
+                return NotFound();
+            }
+
+            return student;
+        }
+
+        // POST: api/Students
+        [HttpPost]
+        public async Task<ActionResult<Student>> PostStudent(Student student)
+        {
+            _logger.LogInformation("Creating new student");
+            _context.Students.Add(student);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                _logger.LogError(ex, "Error occurred while creating student");
+                return StatusCode(500, "An error occurred while creating the student. Please try again.");
+            }
+
+            return CreatedAtAction(nameof(GetStudent), new { id = student.StudentId }, student);
+        }
+
+        // PUT: api/Students/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutStudent(int id, Student student)
+        {
+            if (id != student.StudentId)
+            {
+                _logger.LogWarning("Mismatched ID for student update");
+                return BadRequest("The provided ID does not match the student's ID.");
+            }
+
+            _context.Entry(student).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                if (!StudentExists(id))
+                {
+                    _logger.LogWarning("Student with ID: {Id} not found for update", id);
+                    return NotFound();
+                }
+                else
+                {
+                    _logger.LogError(ex, "Error occurred while updating student");
+                    return StatusCode(500, "An error occurred while updating the student. Please try again.");
+                }
+            }
+
+            return NoContent();
+        }
+
+        // DELETE: api/Students/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteStudent(int id)
+        {
+            var student = await _context.Students.FindAsync(id);
+            if (student == null)
+            {
+                _logger.LogWarning("Student with ID: {Id} not found for deletion", id);
+                return NotFound();
+            }
+
+            _context.Students.Remove(student);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Student with ID: {Id} deleted", id);
+            return NoContent();
+        }
+
+        private bool StudentExists(int id)
+        {
+            return _context.Students.Any(e => e.StudentId == id);
+        }
+    }
+}
